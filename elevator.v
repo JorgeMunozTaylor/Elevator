@@ -1,4 +1,6 @@
 /*---Created by Jorge Munoz Taylor---*/
+/*------University of Costa Rica-----*/
+/*---------Digital circuits II-------*/
 /*-----------Homework 6--------------*/
 
 module elevator (
@@ -7,56 +9,48 @@ module elevator (
     input Go_Down,
     input Halt,
     input Top_Limit_Hit,
-    input Bottom_Limit_Hit
-    OUT
+    input Bottom_Limit_Hit,
+    output reg [4:0] state
 ); 
-    /*2 bit output, there is 3 posible output states:
-    move up, move down or dont move, 10 down, 01 up, 11 dont move*/ 
-    output reg [1:0] direction;
-    reg        [4:0] state, next;
+    reg [4:0] next;  //Next state
 
-    parameter [4:0] Idle      = 0, //State index
-                    Going_Up  = 1,
-                    Going_Down= 2,
-                    At_Top    = 3,
-                    At_Bottom = 4;
+    localparam [4:0] Idle      = 5'b00001, //One hot define, every state is
+                     Going_Up  = 5'b00010, //encoded using only one 1 in
+                     Going_Down= 5'b00100, //diferent position.
+                     At_Top    = 5'b01000,
+                     At_Bottom = 5'b10000;
 
-    reg [4:0] state, next;  //Five states, five bits
+    always @(posedge CLK) state <= next;
 
-    always @(posedge CLK)
-        if (halt)
-            begin
-            state       <= 5'b0;
-            state[Idle] <= 1'b1; //Idle is 00001
-            end
-        else
-            state <= next;
-        
+    always @(*) begin
+        next <= Idle;
+    
+        case(state)
+            Idle:
+                if      (Go_Up)   next <= Going_Up; 
+                else if (Go_Down) next <= Going_Down;  
+                else    next <= Idle;
+                
+            Going_Up:
+                if      (Top_Limit_Hit) next <= At_Top; 
+                else if (Halt) next <= Idle;
+                else    next <= Going_Up;
 
-    always @(Go_Up, Go_Down, Top_Limit_Hit, Bottom_Limit_Hit)
-    begin
-        next      = 5'b0;
-        direction = 2'b11;
+            Going_Down:
+                if      (Bottom_Limit_Hit)  next <= At_Bottom;
+                else if (Halt) next <= Idle;
+                else    next <= Going_Down; 
 
-        case(1'b1)
-            state[Idle]:
-                begin
-                end
-            state[Going_Up]:
-                begin
-                end
-            state[Going_Down]:
-                begin
-                end
-            state[At_Top]:
-                begin
-                end
-            state[At_Bottom]:
-                begin
-                end
+            At_Top:
+                if      (Go_Down) next <= Going_Down;
+                else    next <= At_Top;
+            
+            At_Bottom:
+                if      (Go_Up) next <= Going_Up;
+                else    next <= At_Bottom; 
 
-        endcase
-
-    end     
-
+            default:
+                next <= Idle; //Default state, define in the homework description            
+        endcase  
+    end 
 endmodule

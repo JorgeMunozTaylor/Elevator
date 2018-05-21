@@ -1,0 +1,9 @@
+read_verilog elevator.v
+hierarchy -check -top elevator
+proc;
+opt;
+memory;
+opt;
+fsm;
+opt;
+write_verilog synth.v
